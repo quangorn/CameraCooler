@@ -1,0 +1,7 @@
+syntax: regexp
+^firmware/.idea
+^firmware/cmake-build-release
+^firmware/cmake-build-debug
+^gui/.vs
+^gui/bin
+^gui/obj
