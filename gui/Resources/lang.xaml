@@ -2,5 +2,6 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:local="clr-namespace:CameraCoolerGUI.Resources"
                     xmlns:v="clr-namespace:System;assembly=mscorlib">
-  <v:String x:Key="m_Status">Статус</v:String>
+    <v:String x:Key="m_Status">Статус</v:String>
+    <v:String x:Key="m_ChipTemp">Температура</v:String>
 </ResourceDictionary>
