@@ -24,6 +24,9 @@ at least be connected to INT0 as well.
 #include <util/delay.h>     /* for _delay_ms() */
 #include <avr/eeprom.h>
 
+#include "i2c/i2c.h"
+#include "bme280/bme280_user.h"
+
 #include <avr/pgmspace.h>   /* required by usbdrv.h */
 #include "usbdrv.h"
 #include "oddebug.h"        /* This is also an example for using debug macros */
@@ -65,6 +68,7 @@ uchar usbFunctionWrite(uchar *data, uchar len) {
 /* ------------------------------------------------------------------------- */
 
 uchar answer[1];
+struct bme280_data sensorData;
 
 usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 	usbRequest_t *rq = (void *) data;
@@ -72,7 +76,7 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 	if ((rq->bmRequestType & USBRQ_TYPE_MASK) == USBRQ_TYPE_CLASS) {    /* HID class request */
 		if (rq->bRequest == USBRQ_HID_GET_REPORT) {  /* wValue: ReportType (highbyte), ReportID (lowbyte) */
 			/* since we have only one report type, we can ignore the report-ID */
-			answer[0] = 20;
+			answer[0] = (uchar)(sensorData.temperature / 100);
 			usbMsgPtr = answer;
 			return sizeof(answer);
 		} else if (rq->bRequest == USBRQ_HID_SET_REPORT) {
@@ -101,6 +105,7 @@ int main(void) {
 	odDebugInit();
 	DBG1(0x00, 0, 0);       /* debug output: main starts */
 	usbInit();
+	i2cInit();
 
 	usbDeviceDisconnect();  /* enforce re-enumeration, do this while interrupts are disabled! */
 	_delay_ms(255); /* fake USB disconnect for > 250 ms */
@@ -108,9 +113,30 @@ int main(void) {
 
 	LED_PORT_DDR |= _BV(LED_BIT);   /* make the LED bit an output */
 	sei();
+	int8_t bmeStatus = bmeInit();
+//	if (bmeStatus != BME280_OK) {
+//		sprintf(buf, "BME init failed: %d\r\n", bmeStatus);
+//		usartTransmitString(buf);
+//	}
+
+	bmeStatus = bmeStartInNormalMode();
+//	if (bmeStatus != BME280_OK) {
+//		sprintf(buf, "BME start failed: %d\r\n", bmeStatus);
+//		usartTransmitString(buf);
+//	}
+
 	DBG1(0x01, 0, 0);       /* debug output: main loop starts */
+	int16_t iteration = 0;
 	for (;;) {                /* main event loop */
-		DBG1(0x02, 0, 0);   /* debug output: main loop iterates */
+		if ((iteration++) % 1000 == 0) {
+			bmeStatus = bmeGetCurrentData(&sensorData);
+			if (bmeStatus != BME280_OK) {
+				sensorData.humidity = 0;
+				sensorData.pressure = 0;
+				sensorData.temperature = 0;
+			}
+		}
+		//DBG1(0x02, 0, 0);   /* debug output: main loop iterates */
 		//wdt_reset();
 		usbPoll();
 	}

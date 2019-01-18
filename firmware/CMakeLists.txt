@@ -11,4 +11,4 @@ SET(CMAKE_C_LINK_FLAGS "-mmcu=${MCU}")
 include_directories(usbdrv)
 include_directories(.)
 
-add_executable(CameraCooler usbdrv/usbdrv.c usbdrv/usbdrvasm.S usbdrv/oddebug.c main.c)
+add_executable(CameraCooler usbdrv/usbdrv.c usbdrv/usbdrvasm.S usbdrv/oddebug.c main.c i2c/i2c.c bme280/bme280.c bme280/bme280_user.c)
