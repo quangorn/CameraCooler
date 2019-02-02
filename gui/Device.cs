@@ -15,6 +15,8 @@ namespace CameraCoolerGUI
         private static bool attached;
         private static byte[] outData;
 
+        //TODO: повесить коллбек на подключение устройства
+
         public void Disconnect()
         {
             if (attached)
@@ -49,6 +51,18 @@ namespace CameraCoolerGUI
                 return Result<bool>.Error("Write failed");
 
             return Result<bool>.Ok(true);
+        }
+
+        public Result<RealtimeInfo> ReadRealtimeInfo()
+        {
+            if (!attached)
+                return Result<RealtimeInfo>.Error("Device is not connected");
+
+            if (!device.ReadFeatureData(out outData))
+                return Result<RealtimeInfo>.Error("Read failed");
+            
+            RealtimeInfo ri = RealtimeInfo.FromByteArray(outData, 1);
+            return Result<RealtimeInfo>.Ok(ri);
         }
     }
 }

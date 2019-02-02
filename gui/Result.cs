@@ -8,8 +8,8 @@ namespace CameraCoolerGUI
 {
     class Result<T> where T : struct
     {
-        T? resultObject;
-        string errorMessage;
+        private T? resultObject;
+        private string errorMessage;
 
         private Result(T? resultObject, string errorMessage)
         {
@@ -35,6 +35,16 @@ namespace CameraCoolerGUI
         public bool IsNotOk()
         {
             return !IsOk();
+        }
+
+        public T GetResultObject()
+        {
+            return resultObject.Value;
+        }
+
+        public string GetErrorMessage()
+        {
+            return errorMessage;
         }
     }
 }

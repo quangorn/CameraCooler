@@ -18,6 +18,9 @@ at least be connected to INT0 as well.
 #define LED_PORT_OUTPUT     PORTB
 #define LED_BIT             0
 
+//TODO: выставить минимально необходимое значение
+#define USB_PACKET_SIZE 32
+
 #include <avr/io.h>
 #include <avr/wdt.h>
 #include <avr/interrupt.h>  /* for sei() */
@@ -41,8 +44,8 @@ PROGMEM const char usbHidReportDescriptor[22] = {    /* USB report descriptor */
 		0xa1, 0x01,                    // COLLECTION (Application)
 		0x15, 0x00,                    //   LOGICAL_MINIMUM (0)
 		0x26, 0xff, 0x00,              //   LOGICAL_MAXIMUM (255)
-		0x75, 0x08,                    //   REPORT_SIZE (8)
-		0x95, 0x08,                    //   REPORT_COUNT (8)
+		0x75, USB_PACKET_SIZE,         //   REPORT_SIZE (N)
+		0x95, USB_PACKET_SIZE,         //   REPORT_COUNT (N)
 		0x09, 0x00,                    //   USAGE (Undefined)
 		0xb2, 0x02, 0x01,              //   FEATURE (Data,Var,Abs,Buf)
 		0xc0                           // END_COLLECTION
@@ -67,7 +70,7 @@ uchar usbFunctionWrite(uchar *data, uchar len) {
 
 /* ------------------------------------------------------------------------- */
 
-uchar answer[1];
+uchar answer[USB_PACKET_SIZE];
 struct bme280_data sensorData;
 
 usbMsgLen_t usbFunctionSetup(uchar data[8]) {
@@ -76,7 +79,10 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 	if ((rq->bmRequestType & USBRQ_TYPE_MASK) == USBRQ_TYPE_CLASS) {    /* HID class request */
 		if (rq->bRequest == USBRQ_HID_GET_REPORT) {  /* wValue: ReportType (highbyte), ReportID (lowbyte) */
 			/* since we have only one report type, we can ignore the report-ID */
-			answer[0] = (uchar)(sensorData.temperature / 100);
+			*(int16_t*)answer = (int16_t)2000;
+			*(int16_t*)(answer + 2) = (int16_t)sensorData.temperature;
+			*(uint16_t*)(answer + 4) = (uint16_t)(sensorData.humidity / 10);
+			*(int16_t*)(answer + 6) = (int16_t)(sensorData.pressure / 10);
 			usbMsgPtr = answer;
 			return sizeof(answer);
 		} else if (rq->bRequest == USBRQ_HID_SET_REPORT) {

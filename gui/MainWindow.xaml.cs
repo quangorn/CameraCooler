@@ -13,18 +13,29 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace CameraCoolerGUI
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
+        private Device device = new Device();
+        private DispatcherTimer updateTimer;
 
         public MainWindow()
         {
             InitializeComponent();
-            this.DataContext = this;
-            //this.StatusText.Text = "OK";
+            DataContext = this;
+
+            Result<bool> connectResult = device.TryConnect();
+            if (connectResult.IsNotOk())
+            {
+                StatusText.Text = connectResult.GetErrorMessage();
+                return;
+            }
+
+            InitializeTimer();
         }
 
         private void OnPropertyChanged(PropertyChangedEventArgs e)
@@ -33,6 +44,36 @@ namespace CameraCoolerGUI
             {
                 PropertyChanged(this, e);
             }
+        }
+
+        private void InitializeTimer()
+        {
+            updateTimer = new DispatcherTimer();
+            updateTimer.Tick += new EventHandler(UpdateTimer_Tick);
+            updateTimer.Interval = new TimeSpan(0, 0, 1);
+            updateTimer.Start();
+        }
+
+        private void UpdateTimer_Tick(object sender, EventArgs e)
+        {
+            Result<RealtimeInfo> riResult = device.ReadRealtimeInfo();
+            if (riResult.IsNotOk())
+            {
+                StatusText.Text = riResult.GetErrorMessage();
+                return;
+            }
+            RealtimeInfo ri = riResult.GetResultObject();
+            StatusText.Text = "OK";
+            ChipTempText.Text = FormatTemp(ri.chipTemp);
+            CaseTempText.Text = FormatTemp(ri.caseTemp);
+            CaseHumidityText.Text = FormatTemp(ri.caseHumidity);
+            TargetTempText.Text = FormatTemp(ri.targetTemp);
+        }
+
+        private static string FormatTemp(int temp)
+        {
+            double value = temp / 100.0;
+            return String.Format("{0}", value);
         }
     }
 }
