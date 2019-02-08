@@ -31,6 +31,7 @@ at least be connected to INT0 as well.
 #include "bme280/bme280_user.h"
 
 #include <avr/pgmspace.h>   /* required by usbdrv.h */
+#include <adc/adc.h>
 #include "usbdrv.h"
 #include "oddebug.h"        /* This is also an example for using debug macros */
 
@@ -79,7 +80,7 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 	if ((rq->bmRequestType & USBRQ_TYPE_MASK) == USBRQ_TYPE_CLASS) {    /* HID class request */
 		if (rq->bRequest == USBRQ_HID_GET_REPORT) {  /* wValue: ReportType (highbyte), ReportID (lowbyte) */
 			/* since we have only one report type, we can ignore the report-ID */
-			*(int16_t*)answer = (int16_t)2000;
+			*(int16_t*)answer = adcGetTemp();
 			*(int16_t*)(answer + 2) = (int16_t)sensorData.temperature;
 			*(uint16_t*)(answer + 4) = (uint16_t)(sensorData.humidity / 10);
 			*(int16_t*)(answer + 6) = (int16_t)(sensorData.pressure / 10);
@@ -119,6 +120,7 @@ int main(void) {
 
 	LED_PORT_DDR |= _BV(LED_BIT);   /* make the LED bit an output */
 	sei();
+	adcInit();
 	int8_t bmeStatus = bmeInit();
 //	if (bmeStatus != BME280_OK) {
 //		sprintf(buf, "BME init failed: %d\r\n", bmeStatus);
@@ -135,6 +137,7 @@ int main(void) {
 	int16_t iteration = 0;
 	for (;;) {                /* main event loop */
 		if ((iteration++) % 1000 == 0) {
+			adcStartConversion();
 			bmeStatus = bmeGetCurrentData(&sensorData);
 			if (bmeStatus != BME280_OK) {
 				sensorData.humidity = 0;

@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 void adcInit();
+void adcStartConversion();
 int16_t adcGetTemp();
 
 #endif //CAMERACOOLER_ADC_H
