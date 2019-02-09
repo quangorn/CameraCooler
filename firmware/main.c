@@ -18,9 +18,6 @@ at least be connected to INT0 as well.
 #define LED_PORT_OUTPUT     PORTB
 #define LED_BIT             0
 
-//TODO: выставить минимально необходимое значение
-#define USB_PACKET_SIZE 32
-
 #include <avr/io.h>
 #include <avr/wdt.h>
 #include <avr/interrupt.h>  /* for sei() */
@@ -32,6 +29,10 @@ at least be connected to INT0 as well.
 
 #include <avr/pgmspace.h>   /* required by usbdrv.h */
 #include <adc/adc.h>
+#include <common/runtime_info.h>
+#include <common/settings.h>
+#include <common/definitions.h>
+#include <string.h>
 #include "usbdrv.h"
 #include "oddebug.h"        /* This is also an example for using debug macros */
 
@@ -39,55 +40,57 @@ at least be connected to INT0 as well.
 /* ----------------------------- USB interface ----------------------------- */
 /* ------------------------------------------------------------------------- */
 
-PROGMEM const char usbHidReportDescriptor[22] = {    /* USB report descriptor */
-		0x06, 0x00, 0xff,              // USAGE_PAGE (Generic Desktop)
-		0x09, 0x01,                    // USAGE (Vendor Usage 1)
-		0xa1, 0x01,                    // COLLECTION (Application)
-		0x15, 0x00,                    //   LOGICAL_MINIMUM (0)
-		0x26, 0xff, 0x00,              //   LOGICAL_MAXIMUM (255)
-		0x75, USB_PACKET_SIZE,         //   REPORT_SIZE (N)
-		0x95, USB_PACKET_SIZE,         //   REPORT_COUNT (N)
-		0x09, 0x00,                    //   USAGE (Undefined)
-		0xb2, 0x02, 0x01,              //   FEATURE (Data,Var,Abs,Buf)
-		0xc0                           // END_COLLECTION
+//!!!!! usbHidReportDescriptor size needs to be equal to USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH in usbconfig.h
+PROGMEM const char usbHidReportDescriptor[33] = {    /* USB report descriptor */
+		0x06, 0x00, 0xff,                    // USAGE_PAGE (Generic Desktop)
+		0x09, 0x01,                          // USAGE (Vendor Usage 1)
+		0xa1, 0x01,                          // COLLECTION (Application)
+		0x15, 0x00,                          //   LOGICAL_MINIMUM (0)
+		0x26, 0xff, 0x00,                    //   LOGICAL_MAXIMUM (255)
+		0x75, 0x08,                          //   REPORT_SIZE (8)
+
+		0x85, 0x01,                          //   REPORT_ID (1)
+		0x95, sizeof(struct RuntimeInfo),    //   REPORT_COUNT (N)
+		0x09, 0x01,                          //   USAGE (Vendor Usage 1)
+		0xb2, 0x02, 0x01,                    //   FEATURE (Data,Var,Abs,Buf)
+
+		0x85, 0x02,                          //   REPORT_ID (2)
+		0x95, sizeof(struct Settings),       //   REPORT_COUNT (N)
+		0x09, 0x01,                          //   USAGE (Vendor Usage 1)
+		0xb2, 0x02, 0x01,                    //   FEATURE (Data,Var,Abs,Buf)
+
+		0xc0                                 // END_COLLECTION
 };
-/* Since we define only one feature report, we don't use report-IDs (which
- * would be the first byte of the report). The entire report consists of 128
- * opaque data bytes.
- */
+
+static struct RuntimeInfo runtimeInfo;
+static struct Settings settings; //TODO: eeprom
 
 /* usbFunctionWrite() is called when the host sends a chunk of data to the
  * device. For more information see the documentation in usbdrv/usbdrv.h.
  */
 uchar usbFunctionWrite(uchar *data, uchar len) {
 	//eeprom_write_block(data, (uchar *)0 + currentAddress, len);
-	if (data[0]) {
-		LED_PORT_OUTPUT |= _BV(LED_BIT);
-	} else {
-		LED_PORT_OUTPUT &= ~_BV(LED_BIT);
-	}
+	memcpy(&settings, data + 1, sizeof(settings)); //first byte is report id
 	return 1; /* return 1 if this was the last chunk */
 }
 
 /* ------------------------------------------------------------------------- */
-
-uchar answer[USB_PACKET_SIZE];
-struct bme280_data sensorData;
 
 usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 	usbRequest_t *rq = (void *) data;
 
 	if ((rq->bmRequestType & USBRQ_TYPE_MASK) == USBRQ_TYPE_CLASS) {    /* HID class request */
 		if (rq->bRequest == USBRQ_HID_GET_REPORT) {  /* wValue: ReportType (highbyte), ReportID (lowbyte) */
-			/* since we have only one report type, we can ignore the report-ID */
-			*(int16_t*)answer = adcGetTemp();
-			*(int16_t*)(answer + 2) = (int16_t)sensorData.temperature;
-			*(uint16_t*)(answer + 4) = (uint16_t)(sensorData.humidity / 10);
-			*(int16_t*)(answer + 6) = (int16_t)(sensorData.pressure / 10);
-			usbMsgPtr = answer;
-			return sizeof(answer);
-		} else if (rq->bRequest == USBRQ_HID_SET_REPORT) {
-			/* since we have only one report type, we can ignore the report-ID */
+			if (rq->wValue.bytes[0] == REPORT_ID_RUNTIME_INFO) {
+				//TODO: only test, remove
+				runtimeInfo.coolerPower++;
+				usbMsgPtr = (uchar *) &runtimeInfo;
+				return sizeof(runtimeInfo);
+			} else if (rq->wValue.bytes[0] == REPORT_ID_SETTINGS) {
+				usbMsgPtr = (uchar *) &settings;
+				return sizeof(settings);
+			}
+		} else if (rq->bRequest == USBRQ_HID_SET_REPORT && rq->wValue.bytes[0] == REPORT_ID_SETTINGS) {
 			return USB_NO_MSG;  /* use usbFunctionWrite() to receive data from host */
 		}
 	} else {
@@ -96,6 +99,9 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 	return 0;
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
+#pragma ide diagnostic ignored "OCDFAInspection"
 /* ------------------------------------------------------------------------- */
 
 int main(void) {
@@ -121,35 +127,35 @@ int main(void) {
 	LED_PORT_DDR |= _BV(LED_BIT);   /* make the LED bit an output */
 	sei();
 	adcInit();
-	int8_t bmeStatus = bmeInit();
+	bmeInit();
 //	if (bmeStatus != BME280_OK) {
 //		sprintf(buf, "BME init failed: %d\r\n", bmeStatus);
 //		usartTransmitString(buf);
 //	}
 
-	bmeStatus = bmeStartInNormalMode();
+	bmeStartInNormalMode();
 //	if (bmeStatus != BME280_OK) {
 //		sprintf(buf, "BME start failed: %d\r\n", bmeStatus);
 //		usartTransmitString(buf);
 //	}
 
 	DBG1(0x01, 0, 0);       /* debug output: main loop starts */
-	int16_t iteration = 0;
+	uint16_t iteration = 0;
 	for (;;) {                /* main event loop */
-		if ((iteration++) % 1000 == 0) {
-			adcStartConversion();
-			bmeStatus = bmeGetCurrentData(&sensorData);
-			if (bmeStatus != BME280_OK) {
-				sensorData.humidity = 0;
-				sensorData.pressure = 0;
-				sensorData.temperature = 0;
-			}
+		if (iteration & 0xFF) { //every 256 tick
+			adcReadNextSample();
+		}
+		if ((iteration & 0x03FF) == 0) { //every 1024 tick
+			runtimeInfo.chipTemp = adcGetTemp();
+			bmeGetCurrentData(&runtimeInfo);
 		}
 		//DBG1(0x02, 0, 0);   /* debug output: main loop iterates */
 		//wdt_reset();
 		usbPoll();
+		iteration++;
 	}
 	return 0;
 }
+#pragma clang diagnostic pop
 
 /* ------------------------------------------------------------------------- */

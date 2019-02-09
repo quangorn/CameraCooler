@@ -9,6 +9,9 @@ namespace CameraCoolerGUI
 {
     class Device
     {
+        private const byte REPORT_ID_RUNTIME_INFO = 1;
+        private const byte REPORT_ID_SETTINGS = 2;
+
         private const int VendorId = 1155;
         private const int ProductId = 22356;
         private static HidDevice device;
@@ -46,11 +49,24 @@ namespace CameraCoolerGUI
             if (!attached)
                 return Result<bool>.Error("Device is not connected");
 
-            settings.ToByteArray(outData);
+            outData[0] = REPORT_ID_SETTINGS;
+            settings.ToByteArray(outData, 1);
             if (!device.WriteFeatureData(outData))
                 return Result<bool>.Error("Write failed");
 
             return Result<bool>.Ok(true);
+        }
+
+        public Result<Settings> ReadSettings()
+        {
+            if (!attached)
+                return Result<Settings>.Error("Device is not connected");
+
+            if (!device.ReadFeatureData(out outData, REPORT_ID_SETTINGS))
+                return Result<Settings>.Error("Read settings failed");
+
+            Settings s = Settings.FromByteArray(outData, 0);
+            return Result<Settings>.Ok(s);
         }
 
         public Result<RealtimeInfo> ReadRealtimeInfo()
@@ -58,10 +74,10 @@ namespace CameraCoolerGUI
             if (!attached)
                 return Result<RealtimeInfo>.Error("Device is not connected");
 
-            if (!device.ReadFeatureData(out outData))
+            if (!device.ReadFeatureData(out outData, REPORT_ID_RUNTIME_INFO))
                 return Result<RealtimeInfo>.Error("Read failed");
             
-            RealtimeInfo ri = RealtimeInfo.FromByteArray(outData, 1);
+            RealtimeInfo ri = RealtimeInfo.FromByteArray(outData, 0);
             return Result<RealtimeInfo>.Ok(ri);
         }
     }

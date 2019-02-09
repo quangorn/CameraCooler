@@ -21,6 +21,7 @@ namespace CameraCoolerGUI
     {
         public event PropertyChangedEventHandler PropertyChanged;
         private Device device = new Device();
+        private Settings settings;
         private DispatcherTimer updateTimer;
 
         public MainWindow()
@@ -34,6 +35,14 @@ namespace CameraCoolerGUI
                 StatusText.Text = connectResult.GetErrorMessage();
                 return;
             }
+
+            Result<Settings> readSettingsResult = device.ReadSettings();
+            if (readSettingsResult.IsNotOk())
+            {
+                StatusText.Text = readSettingsResult.GetErrorMessage();
+                return;
+            }
+            settings = readSettingsResult.GetResultObject();
 
             InitializeTimer();
         }
@@ -67,7 +76,9 @@ namespace CameraCoolerGUI
             ChipTempText.Text = FormatTemp(ri.chipTemp);
             CaseTempText.Text = FormatTemp(ri.caseTemp);
             CaseHumidityText.Text = FormatTemp(ri.caseHumidity);
+            DewPointText.Text = FormatTemp(ri.dewPoint);
             TargetTempText.Text = FormatTemp(ri.targetTemp);
+            CoolerPowerText.Text = String.Format("{0:0.0}", ri.coolerPower / 2.55);
         }
 
         private static string FormatTemp(int temp)

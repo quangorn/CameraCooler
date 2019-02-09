@@ -8,18 +8,22 @@ namespace CameraCoolerGUI
 {
     struct Settings
     {
-        public int targetTemp;
+        public short targetTemp;
 
-        public static Settings FromByteArray(byte[] array)
+        public static Settings FromByteArray(byte[] array, int startIndex)
         {
+            int index = startIndex;
             Settings s;
-            s.targetTemp = array[0];
+            s.targetTemp = BitConverter.ToInt16(array, index);
+            index += 2;
             return s;
         }
 
-        public void ToByteArray(byte[] array)
+        public void ToByteArray(byte[] array, int startIndex)
         {
-            array[0] = (byte) targetTemp;
+            int index = startIndex;
+            targetTemp.ToByteArray(array, index);
+            index += 2;
         }
     }
 }

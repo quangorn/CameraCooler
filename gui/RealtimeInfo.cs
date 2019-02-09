@@ -11,7 +11,9 @@ namespace CameraCoolerGUI
         public short chipTemp;
         public short caseTemp;
         public ushort caseHumidity;
+        public short dewPoint;
         public short targetTemp;
+        public byte coolerPower;
 
         public static RealtimeInfo FromByteArray(byte[] array, int startIndex)
         {
@@ -23,8 +25,12 @@ namespace CameraCoolerGUI
             index += 2;
             ri.caseHumidity = BitConverter.ToUInt16(array, index);
             index += 2;
+            ri.dewPoint = BitConverter.ToInt16(array, index);
+            index += 2;
             ri.targetTemp = BitConverter.ToInt16(array, index);
             index += 2;
+            ri.coolerPower = array[index];
+            index++;
             return ri;
         }
     }
