@@ -21,8 +21,12 @@ namespace CameraCoolerGUI
     {
         public event PropertyChangedEventHandler PropertyChanged;
         private Device device = new Device();
-        private Settings settings;
         private DispatcherTimer updateTimer;
+
+        private Settings settings;
+        public double SettingsTargetTemp { get => settings.targetTemp / 100.0; set => settings.targetTemp = (short)(value * 100); }
+        public double SettingsDewPointUnsafeZone { get => settings.dewPointUnsafeZone / 100.0; set => settings.dewPointUnsafeZone = (short)(value * 100); }
+        public ushort SettingsBalanceResistor { get => settings.balanceResistor; set => settings.balanceResistor = value; }
 
         public MainWindow()
         {
@@ -36,15 +40,34 @@ namespace CameraCoolerGUI
                 return;
             }
 
+            ReadSettings();
+            InitializeTimer();
+        }
+
+        private bool ReadSettings()
+        {
             Result<Settings> readSettingsResult = device.ReadSettings();
             if (readSettingsResult.IsNotOk())
             {
                 StatusText.Text = readSettingsResult.GetErrorMessage();
-                return;
+                return false;
             }
             settings = readSettingsResult.GetResultObject();
+            OnPropertyChanged(new PropertyChangedEventArgs("Settings"));
+            StatusText.Text = "Read settings complete";
+            return true;
+        }
 
-            InitializeTimer();
+        private bool WriteSettings()
+        {
+            Result<bool> result = device.WriteSettings(settings);
+            if (result.IsNotOk())
+            {
+                StatusText.Text = result.GetErrorMessage();
+                return false;
+            }
+            StatusText.Text = "Write settings complete";
+            return true;
         }
 
         private void OnPropertyChanged(PropertyChangedEventArgs e)
@@ -85,6 +108,24 @@ namespace CameraCoolerGUI
         {
             double value = temp / 100.0;
             return String.Format("{0}", value);
+        }
+
+        private void SettingsTargetTempWriteButton_Click(object sender, RoutedEventArgs e)
+        {
+            OnWriteButton();
+        }
+
+        private void SettingsWriteButton_Click(object sender, RoutedEventArgs e)
+        {
+            OnWriteButton();
+        }
+
+        private void OnWriteButton()
+        {
+            if (WriteSettings())
+            {
+                ReadSettings();
+            }
         }
     }
 }

@@ -63,14 +63,19 @@ PROGMEM const char usbHidReportDescriptor[33] = {    /* USB report descriptor */
 };
 
 static struct RuntimeInfo runtimeInfo;
-static struct Settings settings; //TODO: eeprom
+static struct Settings eepromSettings EEMEM;
+static struct Settings settings;
+
+void readSettingsFromEEPROM() {
+	eeprom_read_block(&settings, &eepromSettings, sizeof(eepromSettings));
+}
 
 /* usbFunctionWrite() is called when the host sends a chunk of data to the
  * device. For more information see the documentation in usbdrv/usbdrv.h.
  */
 uchar usbFunctionWrite(uchar *data, uchar len) {
-	//eeprom_write_block(data, (uchar *)0 + currentAddress, len);
-	memcpy(&settings, data + 1, sizeof(settings)); //first byte is report id
+	eeprom_write_block(data + 1, &eepromSettings, sizeof(eepromSettings)); //first byte is report id
+	readSettingsFromEEPROM();
 	return 1; /* return 1 if this was the last chunk */
 }
 
@@ -84,6 +89,7 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 			if (rq->wValue.bytes[0] == REPORT_ID_RUNTIME_INFO) {
 				//TODO: only test, remove
 				runtimeInfo.coolerPower++;
+				runtimeInfo.targetTemp = settings.targetTemp;
 				usbMsgPtr = (uchar *) &runtimeInfo;
 				return sizeof(runtimeInfo);
 			} else if (rq->wValue.bytes[0] == REPORT_ID_SETTINGS) {
@@ -107,6 +113,7 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 int main(void) {
 	//wdt_enable(WDTO_1S);
 	wdt_disable();
+	readSettingsFromEEPROM();
 	/* If you don't use the watchdog, replace the call above with a wdt_disable().
 	 * On newer devices, the status of the watchdog (on/off, period) is PRESERVED
 	 * OVER RESET!
@@ -146,7 +153,7 @@ int main(void) {
 			adcReadNextSample();
 		}
 		if ((iteration & 0x03FF) == 0) { //every 1024 tick
-			runtimeInfo.chipTemp = adcGetTemp();
+			runtimeInfo.chipTemp = adcGetTemp(&settings);
 			bmeGetCurrentData(&runtimeInfo);
 		}
 		//DBG1(0x02, 0, 0);   /* debug output: main loop iterates */

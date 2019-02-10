@@ -5,57 +5,101 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CameraCoolerGUI"
         mc:Ignorable="d"
-        Title="MainWindow" Height="525" Width="525">
+        Title="CameraCooler" Height="440" Width="400">
     <Border Padding="10">
         <StackPanel>
-            <Grid Margin="0 10 0 0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{DynamicResource m_ChipTemp}" Margin="0 0 10 0"/>
-                <TextBox Grid.Column="1" x:Name="ChipTempText" IsReadOnly="True" Background="#eee" Padding="2"/>
-            </Grid>
-            <Grid Margin="0 10 0 0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="Case Temp" Margin="0 0 10 0"/>
-                <TextBox Grid.Column="1" x:Name="CaseTempText" IsReadOnly="True" Background="#eee" Padding="2"/>
-            </Grid>
-            <Grid Margin="0 10 0 0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="Case Humidity" Margin="0 0 10 0"/>
-                <TextBox Grid.Column="1" x:Name="CaseHumidityText" IsReadOnly="True" Background="#eee" Padding="2"/>
-            </Grid>
-            <Grid Margin="0 10 0 0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="Dew Point" Margin="0 0 10 0"/>
-                <TextBox Grid.Column="1" x:Name="DewPointText" IsReadOnly="True" Background="#eee" Padding="2"/>
-            </Grid>
-            <Grid Margin="0 10 0 0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="Target Temperature" Margin="0 0 10 0"/>
-                <TextBox Grid.Column="1" x:Name="TargetTempText" IsReadOnly="True" Background="#eee" Padding="2"/>
-            </Grid>
-            <Grid Margin="0 10 0 0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="Cooler Power" Margin="0 0 10 0"/>
-                <TextBox Grid.Column="1" x:Name="CoolerPowerText" IsReadOnly="True" Background="#eee" Padding="2"/>
-            </Grid>
+            <TabControl SelectedIndex="0">
+                <TabItem Header="Realtime Info">
+                    <StackPanel>
+                        <Border BorderBrush="#ccc" BorderThickness="0 0 0 3" Padding="5">
+                            <StackPanel>
+                                <Grid Margin="0 5 0 0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{DynamicResource m_ChipTemp}" Margin="0 0 10 0"/>
+                                    <TextBox Grid.Column="1" x:Name="ChipTempText" IsReadOnly="True" Background="#eee" Padding="2"/>
+                                </Grid>
+                                <Grid Margin="0 10 0 0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Case Temp" Margin="0 0 10 0"/>
+                                    <TextBox Grid.Column="1" x:Name="CaseTempText" IsReadOnly="True" Background="#eee" Padding="2"/>
+                                </Grid>
+                                <Grid Margin="0 10 0 0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Case Humidity" Margin="0 0 10 0"/>
+                                    <TextBox Grid.Column="1" x:Name="CaseHumidityText" IsReadOnly="True" Background="#eee" Padding="2"/>
+                                </Grid>
+                                <Grid Margin="0 10 0 0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Dew Point" Margin="0 0 10 0"/>
+                                    <TextBox Grid.Column="1" x:Name="DewPointText" IsReadOnly="True" Background="#eee" Padding="2"/>
+                                </Grid>
+                                <Grid Margin="0 10 0 0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Target Temperature" Margin="0 0 10 0"/>
+                                    <TextBox Grid.Column="1" x:Name="TargetTempText" IsReadOnly="True" Background="#eee" Padding="2"/>
+                                </Grid>
+                                <Grid Margin="0 10 0 5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Cooler Power" Margin="0 0 10 0"/>
+                                    <TextBox Grid.Column="1" x:Name="CoolerPowerText" IsReadOnly="True" Background="#eee" Padding="2"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                        <Border BorderBrush="#ccc" BorderThickness="0 0 0 0" Padding="5">
+                            <StackPanel>
+                                <Grid Margin="0 5 0 0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Target Temperature" Margin="0 0 10 0"/>
+                                    <TextBox Grid.Column="1" x:Name="SettingsTargetTempText" Text="{Binding SettingsTargetTemp}" Padding="2"/>
+                                </Grid>
+                                <Button x:Name="SettingsTargetTempWriteButton" Click="SettingsTargetTempWriteButton_Click" Content="Write" Margin="0 10 0 5"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </TabItem>
+                <TabItem Header="Settings">
+                    <StackPanel Margin="5 5 5 5">
+                        <Grid Margin="0 5 0 0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Dew Point Unsafe Zone" Margin="0 0 10 0"/>
+                            <TextBox Grid.Column="1" x:Name="SettingsDewPointUnsafeZoneText" Text="{Binding SettingsDewPointUnsafeZone}" Padding="2"/>
+                        </Grid>
+                        <Grid Margin="0 10 0 0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Balance Resistor" Margin="0 0 10 0"/>
+                            <TextBox Grid.Column="1" x:Name="SettingsBalanceResistorText" Text="{Binding SettingsBalanceResistor}" Padding="2"/>
+                        </Grid>
+                        <Button x:Name="SettingsWriteButton" Click="SettingsWriteButton_Click" Content="Write" Margin="0 10 0 5"/>
+                    </StackPanel>
+                </TabItem>
+            </TabControl>
             <TextBlock Text="{DynamicResource m_Status}" Margin="0 10 0 0"/>
             <TextBox x:Name="StatusText" IsReadOnly="True" Background="#eee" Padding="2"/>
         </StackPanel>

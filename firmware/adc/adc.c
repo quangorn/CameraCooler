@@ -23,12 +23,12 @@ void adcReadNextSample() {
 	ADCSRA |= (1 << ADSC);  //Start A2D Conversions
 }
 
-int16_t adcGetTemp() {
+int16_t adcGetTemp(struct Settings* settings) {
 	uint16_t adcSum = 0;
 	for (int8_t i = 0; i < ADC_SAMPLES_SIZE; i++) {
 		adcSum += adcSamples[i];
 	}
-	double rThermistor = BALANCE_RESISTOR * ((MAX_ADC_VALUE * ADC_SAMPLES_SIZE / adcSum) - 1);
+	double rThermistor = settings->balanceResistor * ((MAX_ADC_VALUE * ADC_SAMPLES_SIZE / adcSum) - 1);
 	double temp = (BETA * ROOM_TEMP) /
 	              (BETA + (ROOM_TEMP * log(rThermistor / TERMISTOR_VALUE))) - 273.15;
 	return (int16_t)(temp * 100);
