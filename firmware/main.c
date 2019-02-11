@@ -33,6 +33,7 @@ at least be connected to INT0 as well.
 #include <common/settings.h>
 #include <common/definitions.h>
 #include <string.h>
+#include <cooler/cooler.h>
 #include "usbdrv.h"
 #include "oddebug.h"        /* This is also an example for using debug macros */
 
@@ -87,9 +88,6 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 	if ((rq->bmRequestType & USBRQ_TYPE_MASK) == USBRQ_TYPE_CLASS) {    /* HID class request */
 		if (rq->bRequest == USBRQ_HID_GET_REPORT) {  /* wValue: ReportType (highbyte), ReportID (lowbyte) */
 			if (rq->wValue.bytes[0] == REPORT_ID_RUNTIME_INFO) {
-				//TODO: only test, remove
-				runtimeInfo.coolerPower++;
-				runtimeInfo.targetTemp = settings.targetTemp;
 				usbMsgPtr = (uchar *) &runtimeInfo;
 				return sizeof(runtimeInfo);
 			} else if (rq->wValue.bytes[0] == REPORT_ID_SETTINGS) {
@@ -135,6 +133,7 @@ int main(void) {
 	sei();
 	adcInit();
 	bmeInit();
+	coolerInit();
 //	if (bmeStatus != BME280_OK) {
 //		sprintf(buf, "BME init failed: %d\r\n", bmeStatus);
 //		usartTransmitString(buf);
@@ -152,9 +151,15 @@ int main(void) {
 		if (iteration & 0xFF) { //every 256 tick
 			adcReadNextSample();
 		}
-		if ((iteration & 0x03FF) == 0) { //every 1024 tick
+		if ((iteration & 0x03FF) == 0) { //every 1024 tick (every 110ms)
 			runtimeInfo.chipTemp = adcGetTemp(&settings);
 			bmeGetCurrentData(&runtimeInfo);
+			int16_t safeTargetTemp = runtimeInfo.dewPoint + settings.dewPointUnsafeZone;
+			runtimeInfo.targetTemp = settings.targetTemp > safeTargetTemp ? settings.targetTemp : safeTargetTemp;
+
+			int16_t delta = runtimeInfo.chipTemp - runtimeInfo.targetTemp;
+			runtimeInfo.coolerPower = (uint8_t)(delta < 0 ? 0 : (delta > 255 ? 255 : delta));
+			coolerSetPower(runtimeInfo.coolerPower);
 		}
 		//DBG1(0x02, 0, 0);   /* debug output: main loop iterates */
 		//wdt_reset();
