@@ -34,6 +34,8 @@ at least be connected to INT0 as well.
 #include <common/definitions.h>
 #include <string.h>
 #include <cooler/cooler.h>
+#include <pid/pid.h>
+#include <stdbool.h>
 #include "usbdrv.h"
 #include "oddebug.h"        /* This is also an example for using debug macros */
 
@@ -66,18 +68,46 @@ PROGMEM const char usbHidReportDescriptor[33] = {    /* USB report descriptor */
 static struct RuntimeInfo runtimeInfo;
 static struct Settings eepromSettings EEMEM;
 static struct Settings settings;
+static struct PID_DATA pidData;
 
-void readSettingsFromEEPROM() {
-	eeprom_read_block(&settings, &eepromSettings, sizeof(eepromSettings));
+static int8_t currentEepromWriteOffset;
+
+void readSettingsFromEEPROM(struct Settings* targetSettings) {
+	eeprom_read_block(targetSettings, &eepromSettings, sizeof(eepromSettings));
 }
 
 /* usbFunctionWrite() is called when the host sends a chunk of data to the
  * device. For more information see the documentation in usbdrv/usbdrv.h.
  */
 uchar usbFunctionWrite(uchar *data, uchar len) {
-	eeprom_write_block(data + 1, &eepromSettings, sizeof(eepromSettings)); //first byte is report id
-	readSettingsFromEEPROM();
-	return 1; /* return 1 if this was the last chunk */
+	int8_t bytesRemaining = sizeof(eepromSettings) - currentEepromWriteOffset;
+	if(bytesRemaining <= 0) {
+		return 1; //end of transfer
+	}
+	if (currentEepromWriteOffset == 0) {
+		//first byte is report id
+		data++;
+		len--;
+	}
+	if (len > bytesRemaining) {
+		len = (uchar)bytesRemaining;
+	}
+	eeprom_write_block(data, (uchar*)&eepromSettings  + currentEepromWriteOffset, len);
+	currentEepromWriteOffset += len;
+	if (currentEepromWriteOffset == sizeof(eepromSettings)) { //last write
+		struct Settings newSettings;
+		readSettingsFromEEPROM(&newSettings);
+		if (settings.pFactor != newSettings.pFactor || settings.iFactor != newSettings.iFactor || settings.dFactor != newSettings.dFactor) {
+			pidInit(&newSettings, &pidData);
+		}
+		//TODO: need we reset integrator on target temp change?
+//		else if (settings.targetTemp != newSettings.targetTemp) {
+//			pidResetIntegrator(&pidData);
+//		}
+		settings = newSettings;
+		return 1; //last chunk
+	}
+	return 0;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -95,6 +125,7 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 				return sizeof(settings);
 			}
 		} else if (rq->bRequest == USBRQ_HID_SET_REPORT && rq->wValue.bytes[0] == REPORT_ID_SETTINGS) {
+			currentEepromWriteOffset = 0;
 			return USB_NO_MSG;  /* use usbFunctionWrite() to receive data from host */
 		}
 	} else {
@@ -111,7 +142,7 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 int main(void) {
 	//wdt_enable(WDTO_1S);
 	wdt_disable();
-	readSettingsFromEEPROM();
+	readSettingsFromEEPROM(&settings);
 	/* If you don't use the watchdog, replace the call above with a wdt_disable().
 	 * On newer devices, the status of the watchdog (on/off, period) is PRESERVED
 	 * OVER RESET!
@@ -134,6 +165,7 @@ int main(void) {
 	adcInit();
 	bmeInit();
 	coolerInit();
+	pidInit(&settings, &pidData);
 //	if (bmeStatus != BME280_OK) {
 //		sprintf(buf, "BME init failed: %d\r\n", bmeStatus);
 //		usartTransmitString(buf);
@@ -148,17 +180,16 @@ int main(void) {
 	DBG1(0x01, 0, 0);       /* debug output: main loop starts */
 	uint16_t iteration = 0;
 	for (;;) {                /* main event loop */
-		if (iteration & 0xFF) { //every 256 tick
+		if (iteration & 511) { //every 512 tick
 			adcReadNextSample();
 		}
-		if ((iteration & 0x03FF) == 0) { //every 1024 tick (every 110ms)
+		if ((iteration & 4095) == 0) { //every 4096 tick (every 1/27 s)
 			runtimeInfo.chipTemp = adcGetTemp(&settings);
 			bmeGetCurrentData(&runtimeInfo);
 			int16_t safeTargetTemp = runtimeInfo.dewPoint + settings.dewPointUnsafeZone;
 			runtimeInfo.targetTemp = settings.targetTemp > safeTargetTemp ? settings.targetTemp : safeTargetTemp;
 
-			int16_t delta = runtimeInfo.chipTemp - runtimeInfo.targetTemp;
-			runtimeInfo.coolerPower = (uint8_t)(delta < 0 ? 0 : (delta > 255 ? 255 : delta));
+			runtimeInfo.coolerPower = pidController(runtimeInfo.targetTemp, runtimeInfo.chipTemp, &pidData);
 			coolerSetPower(runtimeInfo.coolerPower);
 		}
 		//DBG1(0x02, 0, 0);   /* debug output: main loop iterates */

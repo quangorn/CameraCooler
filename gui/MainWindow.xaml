@@ -96,6 +96,30 @@
                             <TextBlock Grid.Column="0" Text="Balance Resistor" Margin="0 0 10 0"/>
                             <TextBox Grid.Column="1" x:Name="SettingsBalanceResistorText" Text="{Binding SettingsBalanceResistor}" Padding="2"/>
                         </Grid>
+                        <Grid Margin="0 10 0 0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="P Factor" Margin="0 0 10 0"/>
+                            <TextBox Grid.Column="1" x:Name="SettingsPFactorText" Text="{Binding SettingsPFactor}" Padding="2"/>
+                        </Grid>
+                        <Grid Margin="0 10 0 0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="I Factor" Margin="0 0 10 0"/>
+                            <TextBox Grid.Column="1" x:Name="SettingsIFactorText" Text="{Binding SettingsIFactor}" Padding="2"/>
+                        </Grid>
+                        <Grid Margin="0 10 0 0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="D Factor" Margin="0 0 10 0"/>
+                            <TextBox Grid.Column="1" x:Name="SettingsDFactorText" Text="{Binding SettingsDFactor}" Padding="2"/>
+                        </Grid>
                         <Button x:Name="SettingsWriteButton" Click="SettingsWriteButton_Click" Content="Write" Margin="0 10 0 5"/>
                     </StackPanel>
                 </TabItem>

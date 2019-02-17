@@ -11,6 +11,9 @@ namespace CameraCoolerGUI
         public short targetTemp;
         public short dewPointUnsafeZone;
         public ushort balanceResistor;
+        public short pFactor;
+        public short iFactor;
+        public short dFactor;
 
         public static Settings FromByteArray(byte[] array, int startIndex)
         {
@@ -21,6 +24,12 @@ namespace CameraCoolerGUI
             s.dewPointUnsafeZone = BitConverter.ToInt16(array, index);
             index += 2;
             s.balanceResistor = BitConverter.ToUInt16(array, index);
+            index += 2;
+            s.pFactor = BitConverter.ToInt16(array, index);
+            index += 2;
+            s.iFactor = BitConverter.ToInt16(array, index);
+            index += 2;
+            s.dFactor = BitConverter.ToInt16(array, index);
             index += 2;
             return s;
         }
@@ -33,6 +42,12 @@ namespace CameraCoolerGUI
             dewPointUnsafeZone.ToByteArray(array, index);
             index += 2;
             balanceResistor.ToByteArray(array, index);
+            index += 2;
+            pFactor.ToByteArray(array, index);
+            index += 2;
+            iFactor.ToByteArray(array, index);
+            index += 2;
+            dFactor.ToByteArray(array, index);
             index += 2;
         }
     }

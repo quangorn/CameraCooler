@@ -19,14 +19,19 @@ namespace CameraCoolerGUI
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
+        private const double TEMP_FACTOR = 100.0;
+
         public event PropertyChangedEventHandler PropertyChanged;
         private Device device = new Device();
         private DispatcherTimer updateTimer;
 
         private Settings settings;
-        public double SettingsTargetTemp { get => settings.targetTemp / 100.0; set => settings.targetTemp = (short)(value * 100); }
-        public double SettingsDewPointUnsafeZone { get => settings.dewPointUnsafeZone / 100.0; set => settings.dewPointUnsafeZone = (short)(value * 100); }
+        public double SettingsTargetTemp { get => settings.targetTemp / TEMP_FACTOR; set => settings.targetTemp = (short)(value * TEMP_FACTOR); }
+        public double SettingsDewPointUnsafeZone { get => settings.dewPointUnsafeZone / TEMP_FACTOR; set => settings.dewPointUnsafeZone = (short)(value * TEMP_FACTOR); }
         public ushort SettingsBalanceResistor { get => settings.balanceResistor; set => settings.balanceResistor = value; }
+        public short SettingsPFactor { get => settings.pFactor; set => settings.pFactor = value; }
+        public short SettingsIFactor { get => settings.iFactor; set => settings.iFactor = value; }
+        public short SettingsDFactor { get => settings.dFactor; set => settings.dFactor = value; }
 
         public MainWindow()
         {
@@ -67,7 +72,7 @@ namespace CameraCoolerGUI
                 return false;
             }
             StatusText.Text = "Write settings complete";
-            return true;
+            return ReadSettings();
         }
 
         private void OnPropertyChanged(PropertyChangedEventArgs e)
@@ -106,7 +111,7 @@ namespace CameraCoolerGUI
 
         private static string FormatTemp(int temp)
         {
-            double value = temp / 100.0;
+            double value = temp / TEMP_FACTOR;
             return String.Format("{0}", value);
         }
 
