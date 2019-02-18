@@ -38,14 +38,7 @@ namespace CameraCoolerGUI
             InitializeComponent();
             DataContext = this;
 
-            Result<bool> connectResult = device.TryConnect();
-            if (connectResult.IsNotOk())
-            {
-                StatusText.Text = connectResult.GetErrorMessage();
-                return;
-            }
-
-            ReadSettings();
+            ConnectIfNeeded();
             InitializeTimer();
         }
 
@@ -58,9 +51,23 @@ namespace CameraCoolerGUI
                 return false;
             }
             settings = readSettingsResult.GetResultObject();
-            OnPropertyChanged(new PropertyChangedEventArgs("Settings"));
+            OnPropertyChanged(new PropertyChangedEventArgs(null)); //all properties changed
             StatusText.Text = "Read settings complete";
             return true;
+        }
+
+        private bool ConnectIfNeeded()
+        {
+            if (device.IsConnected())
+                return true;
+
+            Result<bool> connectResult = device.TryConnect();
+            if (connectResult.IsNotOk())
+            {
+                StatusText.Text = connectResult.GetErrorMessage();
+                return false;
+            }
+            return ReadSettings();
         }
 
         private bool WriteSettings()
@@ -93,6 +100,9 @@ namespace CameraCoolerGUI
 
         private void UpdateTimer_Tick(object sender, EventArgs e)
         {
+            if (!ConnectIfNeeded())
+                return;
+
             Result<RealtimeInfo> riResult = device.ReadRealtimeInfo();
             if (riResult.IsNotOk())
             {

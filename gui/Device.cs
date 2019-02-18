@@ -15,10 +15,13 @@ namespace CameraCoolerGUI
         private const int VendorId = 1155;
         private const int ProductId = 22356;
         private static HidDevice device;
-        private static bool attached;
+        private static bool attached = false;
         private static byte[] outData;
 
-        //TODO: повесить коллбек на подключение устройства
+        public bool IsConnected()
+        {
+            return attached;
+        }
 
         public void Disconnect()
         {
@@ -40,6 +43,9 @@ namespace CameraCoolerGUI
                 device.OpenDevice();
                 outData = new byte[device.Capabilities.FeatureReportByteLength - 1];
                 attached = true;
+                device.Inserted += DeviceAttachedHandler;
+                device.Removed += DeviceRemovedHandler;
+                device.MonitorDeviceEvents = true;
             }
             return Result<bool>.Ok(true);
         }
@@ -79,6 +85,16 @@ namespace CameraCoolerGUI
             
             RealtimeInfo ri = RealtimeInfo.FromByteArray(outData, 0);
             return Result<RealtimeInfo>.Ok(ri);
+        }
+
+        private void DeviceAttachedHandler()
+        {
+            TryConnect();
+        }
+
+        private void DeviceRemovedHandler()
+        {
+            Disconnect();
         }
     }
 }
