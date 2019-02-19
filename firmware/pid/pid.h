@@ -49,8 +49,7 @@ typedef struct PID_DATA {
  */
 // Maximum value of variables
 #define MAX_INT         INT16_MAX
-#define MAX_LONG        INT32_MAX
-#define MAX_I_TERM      (MAX_LONG / 2)
+#define MAX_I_TERM      0x800000
 #define MAX_OUT         0xFF
 
 void pidInit(struct Settings *settings, struct PID_DATA *pid);

@@ -180,10 +180,10 @@ int main(void) {
 	DBG1(0x01, 0, 0);       /* debug output: main loop starts */
 	uint16_t iteration = 0;
 	for (;;) {                /* main event loop */
-		if (iteration & 511) { //every 512 tick
+		if ((iteration & 0x1FFF) == 0) { //every 8192 tick
 			adcReadNextSample();
 		}
-		if ((iteration & 4095) == 0) { //every 4096 tick (every 1/27 s)
+		if ((iteration & 0xFFFF) == 0) { //every 65536 tick (4 Hz)
 			runtimeInfo.chipTemp = adcGetTemp(&settings);
 			bmeGetCurrentData(&runtimeInfo);
 			int16_t safeTargetTemp = runtimeInfo.dewPoint + settings.dewPointUnsafeZone;
