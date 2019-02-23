@@ -12,7 +12,7 @@ void disableFan() {
 }
 
 void coolerInit() {
-	//PD6 (OC0A) is now an output
+	//PD6 (OC0A) is now an output //TODO: PB3 (OC2A)
 	DDRD |= 1 << DDD6;
 	//PB1 (OC1A) is now an output
 	DDRB |= 1 << DDB1;
