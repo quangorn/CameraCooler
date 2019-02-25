@@ -14,10 +14,6 @@ different I/O pins for USB. Please note that USB D+ must be the INT0 pin, or
 at least be connected to INT0 as well.
 */
 
-#define LED_PORT_DDR        DDRB
-#define LED_PORT_OUTPUT     PORTB
-#define LED_BIT             0
-
 #include <avr/io.h>
 #include <avr/wdt.h>
 #include <avr/interrupt.h>  /* for sei() */
@@ -39,12 +35,16 @@ at least be connected to INT0 as well.
 #include "usbdrv.h"
 #include "oddebug.h"        /* This is also an example for using debug macros */
 
+#define LED_PORT_DDR        DDRD
+#define LED_PORT_OUTPUT     PORTD
+#define LED_BIT             6
+
 /* ------------------------------------------------------------------------- */
 /* ----------------------------- USB interface ----------------------------- */
 /* ------------------------------------------------------------------------- */
 
 //!!!!! usbHidReportDescriptor size needs to be equal to USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH in usbconfig.h
-PROGMEM const char usbHidReportDescriptor[33] = {    /* USB report descriptor */
+PROGMEM const char usbHidReportDescriptor[42] = {    /* USB report descriptor */
 		0x06, 0x00, 0xff,                    // USAGE_PAGE (Generic Desktop)
 		0x09, 0x01,                          // USAGE (Vendor Usage 1)
 		0xa1, 0x01,                          // COLLECTION (Application)
@@ -62,6 +62,11 @@ PROGMEM const char usbHidReportDescriptor[33] = {    /* USB report descriptor */
 		0x09, 0x01,                          //   USAGE (Vendor Usage 1)
 		0xb2, 0x02, 0x01,                    //   FEATURE (Data,Var,Abs,Buf)
 
+		0x85, 0x03,                          //   REPORT_ID (3)
+		0x95, 0x01,                          //   REPORT_COUNT (1)
+		0x09, 0x01,                          //   USAGE (Vendor Usage 1)
+		0xb2, 0x02, 0x01,                    //   FEATURE (Data,Var,Abs,Buf)
+
 		0xc0                                 // END_COLLECTION
 };
 
@@ -69,8 +74,22 @@ static struct RuntimeInfo runtimeInfo;
 static struct Settings eepromSettings EEMEM;
 static struct Settings settings;
 static struct PID_DATA pidData;
+static bool coolerState = true;
 
+static uint8_t currentReportId;
 static int8_t currentEepromWriteOffset;
+
+void ledOn() {
+	LED_PORT_OUTPUT |= 1 << LED_BIT;
+}
+
+void ledOff() {
+	LED_PORT_OUTPUT &= ~(1 << LED_BIT);
+}
+
+void ledToggle() {
+	LED_PORT_OUTPUT ^= 1 << LED_BIT;
+}
 
 void readSettingsFromEEPROM(struct Settings* targetSettings) {
 	eeprom_read_block(targetSettings, &eepromSettings, sizeof(eepromSettings));
@@ -80,6 +99,13 @@ void readSettingsFromEEPROM(struct Settings* targetSettings) {
  * device. For more information see the documentation in usbdrv/usbdrv.h.
  */
 uchar usbFunctionWrite(uchar *data, uchar len) {
+	ledToggle();
+	if (currentReportId == REPORT_ID_COOLER_STATE) {
+		coolerState = data[1];
+		coolerSetState(coolerState);
+		return 1; //end of transfer
+	}
+
 	int8_t bytesRemaining = sizeof(eepromSettings) - currentEepromWriteOffset;
 	if(bytesRemaining <= 0) {
 		return 1; //end of transfer
@@ -100,10 +126,6 @@ uchar usbFunctionWrite(uchar *data, uchar len) {
 		if (settings.pFactor != newSettings.pFactor || settings.iFactor != newSettings.iFactor || settings.dFactor != newSettings.dFactor) {
 			pidInit(&newSettings, &pidData);
 		}
-		//TODO: need we reset integrator on target temp change?
-//		else if (settings.targetTemp != newSettings.targetTemp) {
-//			pidResetIntegrator(&pidData);
-//		}
 		settings = newSettings;
 		return 1; //last chunk
 	}
@@ -113,18 +135,24 @@ uchar usbFunctionWrite(uchar *data, uchar len) {
 /* ------------------------------------------------------------------------- */
 
 usbMsgLen_t usbFunctionSetup(uchar data[8]) {
+	ledToggle();
 	usbRequest_t *rq = (void *) data;
 
+	uint8_t reportId = rq->wValue.bytes[0];
 	if ((rq->bmRequestType & USBRQ_TYPE_MASK) == USBRQ_TYPE_CLASS) {    /* HID class request */
 		if (rq->bRequest == USBRQ_HID_GET_REPORT) {  /* wValue: ReportType (highbyte), ReportID (lowbyte) */
-			if (rq->wValue.bytes[0] == REPORT_ID_RUNTIME_INFO) {
+			if (reportId == REPORT_ID_RUNTIME_INFO) {
 				usbMsgPtr = (uchar *) &runtimeInfo;
 				return sizeof(runtimeInfo);
-			} else if (rq->wValue.bytes[0] == REPORT_ID_SETTINGS) {
+			} else if (reportId == REPORT_ID_SETTINGS) {
 				usbMsgPtr = (uchar *) &settings;
 				return sizeof(settings);
+			} else if (reportId == REPORT_ID_COOLER_STATE) {
+				usbMsgPtr = (uchar *) &coolerState;
+				return sizeof(coolerState);
 			}
-		} else if (rq->bRequest == USBRQ_HID_SET_REPORT && rq->wValue.bytes[0] == REPORT_ID_SETTINGS) {
+		} else if (rq->bRequest == USBRQ_HID_SET_REPORT) {
+			currentReportId = reportId;
 			currentEepromWriteOffset = 0;
 			return USB_NO_MSG;  /* use usbFunctionWrite() to receive data from host */
 		}
@@ -160,11 +188,12 @@ int main(void) {
 	_delay_ms(255); /* fake USB disconnect for > 250 ms */
 	usbDeviceConnect();
 
-	LED_PORT_DDR |= _BV(LED_BIT);   /* make the LED bit an output */
+	LED_PORT_DDR |= 1 << LED_BIT;   /* make the LED bit an output */
 	sei();
 	adcInit();
 	bmeInit();
 	coolerInit();
+	coolerSetState(coolerState);
 	pidInit(&settings, &pidData);
 //	if (bmeStatus != BME280_OK) {
 //		sprintf(buf, "BME init failed: %d\r\n", bmeStatus);

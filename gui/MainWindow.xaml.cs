@@ -56,6 +56,27 @@ namespace CameraCoolerGUI
             return true;
         }
 
+        private bool ReadCoolerState()
+        {
+            Result<bool> result = device.ReadCoolerState();
+            if (result.IsNotOk())
+            {
+                StatusText.Text = result.GetErrorMessage();
+                return false;
+            }
+            CoolerStateCB.IsChecked = result.GetResultObject();
+            if (CoolerStateCB.IsChecked.Value)
+            {
+                CoolerStateCB.Content = "On";
+            }
+            else
+            {
+                CoolerStateCB.Content = "Off";
+            }
+            StatusText.Text = "Read cooler state complete";
+            return true;
+        }
+
         private bool ConnectIfNeeded()
         {
             if (device.IsConnected())
@@ -67,7 +88,7 @@ namespace CameraCoolerGUI
                 StatusText.Text = connectResult.GetErrorMessage();
                 return false;
             }
-            return ReadSettings();
+            return ReadSettings() && ReadCoolerState();
         }
 
         private bool WriteSettings()
@@ -141,6 +162,19 @@ namespace CameraCoolerGUI
             {
                 ReadSettings();
             }
+        }
+
+        private void CoolerStateCB_Click(object sender, RoutedEventArgs e)
+        {
+            CheckBox cb = (CheckBox)sender;
+            Result<bool> result = device.WriteCoolerState(cb.IsChecked.Value);
+            if (result.IsNotOk())
+            {
+                StatusText.Text = result.GetErrorMessage();
+                return;
+            }
+            StatusText.Text = "Write cooler state complete";
+            ReadCoolerState();
         }
     }
 }

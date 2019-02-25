@@ -11,6 +11,7 @@ namespace CameraCoolerGUI
     {
         private const byte REPORT_ID_RUNTIME_INFO = 1;
         private const byte REPORT_ID_SETTINGS = 2;
+        private const byte REPORT_ID_COOLER_STATE = 3;
 
         private const int VendorId = 1155;
         private const int ProductId = 22356;
@@ -87,9 +88,33 @@ namespace CameraCoolerGUI
             return Result<RealtimeInfo>.Ok(ri);
         }
 
+        public Result<bool> WriteCoolerState(bool state)
+        {
+            if (!attached)
+                return Result<bool>.Error("Device is not connected");
+
+            outData[0] = REPORT_ID_COOLER_STATE;
+            outData[1] = (byte)(state ? 1 : 0);
+            if (!device.WriteFeatureData(outData))
+                return Result<bool>.Error("Write cooler state failed");
+
+            return Result<bool>.Ok(true);
+        }
+
+        public Result<bool> ReadCoolerState()
+        {
+            if (!attached)
+                return Result<bool>.Error("Device is not connected");
+
+            if (!device.ReadFeatureData(out outData, REPORT_ID_COOLER_STATE))
+                return Result<bool>.Error("Read cooler state failed");
+
+            return Result<bool>.Ok(outData[0] != 0);
+        }
+
         private void DeviceAttachedHandler()
         {
-            TryConnect();
+            //TryConnect();
         }
 
         private void DeviceRemovedHandler()
