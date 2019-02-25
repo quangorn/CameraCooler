@@ -4,6 +4,7 @@
 //usb feature report ids
 #define REPORT_ID_RUNTIME_INFO 1
 #define REPORT_ID_SETTINGS     2
+#define REPORT_ID_COOLER_STATE 3
 
 //dew point calculation coefficients
 #define DEW_POINT_A 17.27

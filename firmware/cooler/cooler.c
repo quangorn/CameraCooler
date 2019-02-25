@@ -11,6 +11,14 @@ void disableFan() {
 	TCCR2A &= ~(1 << COM2A1);
 }
 
+void coolerSetState(bool state) {
+	if (state) {
+		PORTB &= ~(1 << PORTB2);
+	} else {
+		PORTB |= 1 << PORTB2;
+	}
+}
+
 void coolerInit() {
 	//PB1(OC1A), PB2, PB3(OC2A) are now an output
 	DDRB |= (1 << DDB1) | (1 << DDB2) | (1 << DDB3);
