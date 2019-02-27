@@ -21,6 +21,9 @@ namespace CameraCoolerGUI
     {
         private const double TEMP_FACTOR = 100.0;
 
+        private Brush grayBrush = new SolidColorBrush(Color.FromRgb(0xEE, 0xEE, 0xEE));
+        private Brush redBrush = Brushes.LightPink;
+
         public event PropertyChangedEventHandler PropertyChanged;
         private Device device = new Device();
         private DispatcherTimer updateTimer;
@@ -136,8 +139,16 @@ namespace CameraCoolerGUI
             CaseTempText.Text = FormatTemp(ri.caseTemp);
             CaseHumidityText.Text = FormatTemp(ri.caseHumidity);
             DewPointText.Text = FormatTemp(ri.dewPoint);
-            TargetTempText.Text = FormatTemp(ri.targetTemp);
             CoolerPowerText.Text = String.Format("{0:0.0}", ri.coolerPower / 2.55);
+            TargetTempText.Text = FormatTemp(ri.targetTemp);
+            if (ri.targetTemp > settings.targetTemp)
+            {
+                TargetTempText.Background = redBrush;
+            }
+            else
+            {
+                TargetTempText.Background = grayBrush;
+            }
         }
 
         private static string FormatTemp(int temp)

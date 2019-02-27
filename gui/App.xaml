@@ -8,6 +8,11 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/lang.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+            <Style x:Key="MyStyle" TargetType="{x:Type Control}">
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="FontFamily" Value="Segoe UI" />
+                <Setter Property="FontStyle" Value="Normal" />
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

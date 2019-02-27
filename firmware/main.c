@@ -218,7 +218,11 @@ int main(void) {
 			int16_t safeTargetTemp = runtimeInfo.dewPoint + settings.dewPointUnsafeZone;
 			runtimeInfo.targetTemp = settings.targetTemp > safeTargetTemp ? settings.targetTemp : safeTargetTemp;
 
-			runtimeInfo.coolerPower = pidController(runtimeInfo.targetTemp, runtimeInfo.chipTemp, &pidData);
+			if (coolerState) {
+				runtimeInfo.coolerPower = pidController(runtimeInfo.targetTemp, runtimeInfo.chipTemp, &pidData);
+			} else {
+				runtimeInfo.coolerPower = 0;
+			}
 			coolerSetPower(runtimeInfo.coolerPower);
 		}
 		//DBG1(0x02, 0, 0);   /* debug output: main loop iterates */

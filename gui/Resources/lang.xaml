@@ -2,6 +2,20 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:local="clr-namespace:CameraCoolerGUI.Resources"
                     xmlns:v="clr-namespace:System;assembly=mscorlib">
+    <v:String x:Key="m_RealtimeInfo">Текущие значения</v:String>
+    <v:String x:Key="m_Settings">Настройки</v:String>
     <v:String x:Key="m_Status">Статус</v:String>
-    <v:String x:Key="m_ChipTemp">Температура</v:String>
+    <v:String x:Key="m_Write">Запись настроек</v:String>
+    <v:String x:Key="m_ChipTemp">Температура чипа, ℃</v:String>
+    <v:String x:Key="m_CaseTemp">Температура в корпусе, ℃</v:String>
+    <v:String x:Key="m_CaseHumidity">Влажность в корпусе, %</v:String>
+    <v:String x:Key="m_DewPoint">Точка росы, ℃</v:String>
+    <v:String x:Key="m_TargetTemp">Целевая температура чипа, ℃</v:String>
+    <v:String x:Key="m_CoolerPower">Мощность охладителя, %</v:String>
+    <v:String x:Key="m_CoolerState">Включение охлаждения</v:String>
+    <v:String x:Key="m_DewPointUnsafeZone">Ширина безопасной зоны точки росы, ℃</v:String>
+    <v:String x:Key="m_BalanceResistor">Номинал резистора в делителе, Ом</v:String>
+    <v:String x:Key="m_PFactor">Пропорциональный коэффициент</v:String>
+    <v:String x:Key="m_IFactor">Интегральный коэффициент</v:String>
+    <v:String x:Key="m_DFactor">Дифференцирующий коэффициент</v:String>
 </ResourceDictionary>
