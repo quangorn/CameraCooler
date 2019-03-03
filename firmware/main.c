@@ -1,29 +1,13 @@
-/* Name: main.c
- * Project: hid-data, example how to use HID for data transfer
- * Author: Christian Starkjohann
- * Creation Date: 2008-04-11
- * Tabsize: 4
- * Copyright: (c) 2008 by OBJECTIVE DEVELOPMENT Software GmbH
- * License: GNU GPL v2 (see License.txt), GNU GPL v3 or proprietary (CommercialLicense.txt)
- */
-
-/*
-This example should run on most AVRs with only little changes. No special
-hardware resources except INT0 are used. You may have to change usbconfig.h for
-different I/O pins for USB. Please note that USB D+ must be the INT0 pin, or
-at least be connected to INT0 as well.
-*/
-
 #include <avr/io.h>
 #include <avr/wdt.h>
-#include <avr/interrupt.h>  /* for sei() */
-#include <util/delay.h>     /* for _delay_ms() */
+#include <avr/interrupt.h>
+#include <util/delay.h>
 #include <avr/eeprom.h>
 
 #include "i2c/i2c.h"
 #include "bme280/bme280_user.h"
 
-#include <avr/pgmspace.h>   /* required by usbdrv.h */
+#include <avr/pgmspace.h>
 #include <adc/adc.h>
 #include <common/runtime_info.h>
 #include <common/settings.h>
@@ -33,15 +17,10 @@ at least be connected to INT0 as well.
 #include <pid/pid.h>
 #include <stdbool.h>
 #include "usbdrv.h"
-#include "oddebug.h"        /* This is also an example for using debug macros */
 
 #define LED_PORT_DDR        DDRD
 #define LED_PORT_OUTPUT     PORTD
 #define LED_BIT             6
-
-/* ------------------------------------------------------------------------- */
-/* ----------------------------- USB interface ----------------------------- */
-/* ------------------------------------------------------------------------- */
 
 //!!!!! usbHidReportDescriptor size needs to be equal to USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH in usbconfig.h
 PROGMEM const char usbHidReportDescriptor[42] = {    /* USB report descriptor */
@@ -99,7 +78,6 @@ void readSettingsFromEEPROM(struct Settings* targetSettings) {
  * device. For more information see the documentation in usbdrv/usbdrv.h.
  */
 uchar usbFunctionWrite(uchar *data, uchar len) {
-	ledToggle();
 	if (currentReportId == REPORT_ID_COOLER_STATE) {
 		coolerState = data[1];
 		coolerSetState(coolerState);
@@ -132,10 +110,7 @@ uchar usbFunctionWrite(uchar *data, uchar len) {
 	return 0;
 }
 
-/* ------------------------------------------------------------------------- */
-
 usbMsgLen_t usbFunctionSetup(uchar data[8]) {
-	ledToggle();
 	usbRequest_t *rq = (void *) data;
 
 	uint8_t reportId = rq->wValue.bytes[0];
@@ -165,22 +140,8 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
 #pragma ide diagnostic ignored "OCDFAInspection"
-/* ------------------------------------------------------------------------- */
-
 int main(void) {
-	//wdt_enable(WDTO_1S);
-	wdt_disable();
 	readSettingsFromEEPROM(&settings);
-	/* If you don't use the watchdog, replace the call above with a wdt_disable().
-	 * On newer devices, the status of the watchdog (on/off, period) is PRESERVED
-	 * OVER RESET!
-	 */
-	/* RESET status: all port bits are inputs without pull-up.
-	 * That's the way we need D+ and D-. Therefore we don't need any
-	 * additional hardware initialization.
-	 */
-	odDebugInit();
-	DBG1(0x00, 0, 0);       /* debug output: main starts */
 	usbInit();
 	i2cInit();
 
@@ -195,24 +156,13 @@ int main(void) {
 	coolerInit();
 	coolerSetState(coolerState);
 	pidInit(&settings, &pidData);
-//	if (bmeStatus != BME280_OK) {
-//		sprintf(buf, "BME init failed: %d\r\n", bmeStatus);
-//		usartTransmitString(buf);
-//	}
-
 	bmeStartInNormalMode();
-//	if (bmeStatus != BME280_OK) {
-//		sprintf(buf, "BME start failed: %d\r\n", bmeStatus);
-//		usartTransmitString(buf);
-//	}
-
-	DBG1(0x01, 0, 0);       /* debug output: main loop starts */
-	uint16_t iteration = 0;
+	uint16_t iteration = 1;
 	for (;;) {                /* main event loop */
 		if ((iteration & 0x1FFF) == 0) { //every 8192 tick
 			adcReadNextSample();
 		}
-		if ((iteration & 0xFFFF) == 0) { //every 65536 tick (4 Hz)
+		if (iteration == 0) { //every 65536 tick (4 Hz)
 			runtimeInfo.chipTemp = adcGetTemp(&settings);
 			bmeGetCurrentData(&runtimeInfo);
 			int16_t safeTargetTemp = runtimeInfo.dewPoint + settings.dewPointUnsafeZone;
@@ -223,15 +173,16 @@ int main(void) {
 			} else {
 				runtimeInfo.coolerPower = 0;
 			}
+			if (runtimeInfo.coolerPower) {
+				ledToggle();
+			} else {
+				ledOff();
+			}
 			coolerSetPower(runtimeInfo.coolerPower);
 		}
-		//DBG1(0x02, 0, 0);   /* debug output: main loop iterates */
-		//wdt_reset();
 		usbPoll();
 		iteration++;
 	}
 	return 0;
 }
 #pragma clang diagnostic pop
-
-/* ------------------------------------------------------------------------- */

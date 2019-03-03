@@ -11,7 +11,6 @@
 #define DEW_POINT_B 23770.0
 
 //adc definitions
-#define BALANCE_RESISTOR 1000.0 //second resistor value
 #define MAX_ADC_VALUE    1023.0
 #define BETA             2860.0
 #define ROOM_TEMP        298.15 //room temp in Kelvins
