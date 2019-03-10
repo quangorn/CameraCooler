@@ -12,8 +12,6 @@
 
 //adc definitions
 #define MAX_ADC_VALUE    1023.0
-#define BETA             2860.0
 #define ROOM_TEMP        298.15 //room temp in Kelvins
-#define TERMISTOR_VALUE  1000.0  //termistor value in room temp
 
 #endif //CAMERACOOLER_DEFINITIONS_H

@@ -20,9 +20,10 @@
  * $Date: 2006-02-16 12:46:13 +0100 (to, 16 feb 2006) $
  *****************************************************************************/
 
+#include <stdint.h>
+#include <string.h>
 #include <common/settings.h>
 #include "pid.h"
-#include "stdint.h"
 
 /*! \brief Initialisation of PID controller parameters.
  *
@@ -37,14 +38,14 @@ void pidInit(struct Settings *settings, struct PID_DATA *pid)
 // Set up PID controller parameters
 {
 	// Start values for PID controller
-	pid->sumError = 0;
-	pid->lastProcessValue = 0;
+	memset(pid, 0, sizeof(struct PID_DATA));
 	// Tuning constants for PID loop
 	pid->P_Factor = settings->pFactor;
 	pid->I_Factor = settings->iFactor;
 	pid->D_Factor = settings->dFactor;
 	// Limits to avoid overflow
 	pid->maxError = MAX_INT / (pid->P_Factor + 1);
+	pid->maxD_Error = MAX_INT / (pid->D_Factor + 1);
 	pid->maxSumError = MAX_I_TERM / (pid->I_Factor + 1);
 }
 
@@ -85,10 +86,17 @@ uint8_t pidController(int16_t setPoint, int16_t processValue, struct PID_DATA *p
 		i_term = pid_st->I_Factor * pid_st->sumError;
 	}
 
-	// Calculate Dterm
-	d_term = pid_st->D_Factor * (pid_st->lastProcessValue - processValue);
-
-	pid_st->lastProcessValue = processValue;
+	// Calculate Dterm and limit error overflow
+	uint8_t index = pid_st->processValuesIndex++ % HISTORY_SIZE;
+	error = pid_st->processValuesHistory[index] - processValue;
+	if (error > pid_st->maxD_Error) {
+		d_term = MAX_INT;
+	} else if (error < -pid_st->maxD_Error) {
+		d_term = -MAX_INT;
+	} else {
+		d_term = pid_st->D_Factor * error;
+	}	
+	pid_st->processValuesHistory[index] = processValue;
 
 	//normalize
 	i_term >>= 8;

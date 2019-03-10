@@ -15,6 +15,8 @@
     <v:String x:Key="m_CoolerState">Включение охлаждения</v:String>
     <v:String x:Key="m_DewPointUnsafeZone">Ширина безопасной зоны точки росы, ℃</v:String>
     <v:String x:Key="m_BalanceResistor">Номинал резистора в делителе, Ом</v:String>
+    <v:String x:Key="m_ThermistorValue">Сопротивление термистора при 25℃, Ом</v:String>
+    <v:String x:Key="m_BetaCoeff">Beta-коэффициент</v:String>
     <v:String x:Key="m_PFactor">Пропорциональный коэффициент</v:String>
     <v:String x:Key="m_IFactor">Интегральный коэффициент</v:String>
     <v:String x:Key="m_DFactor">Дифференцирующий коэффициент</v:String>

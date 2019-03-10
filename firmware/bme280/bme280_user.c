@@ -72,8 +72,8 @@ int8_t bmeStartInNormalMode() {
 	uint8_t settings_sel;
 
 	/* Recommended mode of operation: Indoor navigation */
-	dev.settings.osr_h = BME280_OVERSAMPLING_4X;
-	dev.settings.osr_t = BME280_OVERSAMPLING_4X;
+	dev.settings.osr_h = BME280_OVERSAMPLING_1X;
+	dev.settings.osr_t = BME280_OVERSAMPLING_2X;
 	dev.settings.filter = BME280_FILTER_COEFF_16;
 	dev.settings.standby_time = BME280_STANDBY_TIME_62_5_MS;
 

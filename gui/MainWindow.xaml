@@ -110,6 +110,22 @@
                                 <ColumnDefinition Width="3*"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{DynamicResource m_ThermistorValue}" Margin="0 0 10 0"/>
+                            <TextBox Grid.Column="1" x:Name="SettingsThermistorValueText" Text="{Binding SettingsThermistorValue}" Padding="2"/>
+                        </Grid>
+                        <Grid Margin="0 10 0 0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{DynamicResource m_BetaCoeff}" Margin="0 0 10 0"/>
+                            <TextBox Grid.Column="1" x:Name="SettingsBetaCoeffText" Text="{Binding SettingsBetaCoeff}" Padding="2"/>
+                        </Grid>
+                        <Grid Margin="0 10 0 0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="{DynamicResource m_PFactor}" Margin="0 0 10 0"/>
                             <TextBox Grid.Column="1" x:Name="SettingsPFactorText" Text="{Binding SettingsPFactor}" Padding="2"/>
                         </Grid>

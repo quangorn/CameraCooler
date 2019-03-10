@@ -22,13 +22,21 @@
 
 #include "stdint.h"
 
+/*! \brief Maximum values
+ *
+ * Needed to avoid sign/overflow problems
+ */
+// Maximum value of variables
+#define MAX_INT         INT16_MAX
+#define MAX_I_TERM      0x800000
+#define MAX_OUT         0xFF
+#define HISTORY_SIZE	16
+
 /*! \brief PID Status
  *
  * Setpoints and data used by the PID control algorithm
  */
 typedef struct PID_DATA {
-	//! Last process value, used to find derivative of process value.
-	int16_t lastProcessValue;
 	//! Summation of errors, used for integrate calculations
 	int32_t sumError;
 	//! The Proportional tuning constant, multiplied with SCALING_FACTOR
@@ -39,18 +47,15 @@ typedef struct PID_DATA {
 	int16_t D_Factor;
 	//! Maximum allowed error, avoid overflow
 	int16_t maxError;
+		//! Maximum allowed derivative error, avoid overflow
+	int16_t maxD_Error;
 	//! Maximum allowed sumerror, avoid overflow
 	int32_t maxSumError;
+	//! Process valuesa, used to find derivative of process value.
+	int16_t processValuesHistory[HISTORY_SIZE];
+	//! Process values index
+	uint8_t processValuesIndex;
 } pidData_t;
-
-/*! \brief Maximum values
- *
- * Needed to avoid sign/overflow problems
- */
-// Maximum value of variables
-#define MAX_INT         INT16_MAX
-#define MAX_I_TERM      0x800000
-#define MAX_OUT         0xFF
 
 void pidInit(struct Settings *settings, struct PID_DATA *pid);
 

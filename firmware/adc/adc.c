@@ -29,7 +29,7 @@ int16_t adcGetTemp(struct Settings* settings) {
 		adcSum += adcSamples[i];
 	}
 	double rThermistor = settings->balanceResistor * ((MAX_ADC_VALUE * ADC_SAMPLES_SIZE / adcSum) - 1);
-	double temp = (BETA * ROOM_TEMP) /
-	              (BETA + (ROOM_TEMP * log(rThermistor / TERMISTOR_VALUE))) - 273.15;
+	double temp = (settings->betaCoeff * ROOM_TEMP) /
+	              (settings->betaCoeff + (ROOM_TEMP * log(rThermistor / settings->thermistorValue))) - 273.15;
 	return (int16_t)(temp * 100);
 }

@@ -32,6 +32,8 @@ namespace CameraCoolerGUI
         public double SettingsTargetTemp { get => settings.targetTemp / TEMP_FACTOR; set => settings.targetTemp = (short)(value * TEMP_FACTOR); }
         public double SettingsDewPointUnsafeZone { get => settings.dewPointUnsafeZone / TEMP_FACTOR; set => settings.dewPointUnsafeZone = (short)(value * TEMP_FACTOR); }
         public ushort SettingsBalanceResistor { get => settings.balanceResistor; set => settings.balanceResistor = value; }
+        public ushort SettingsThermistorValue { get => settings.thermistorValue; set => settings.thermistorValue = value; }
+        public ushort SettingsBetaCoeff { get => settings.betaCoeff; set => settings.betaCoeff = value; }
         public short SettingsPFactor { get => settings.pFactor; set => settings.pFactor = value; }
         public short SettingsIFactor { get => settings.iFactor; set => settings.iFactor = value; }
         public short SettingsDFactor { get => settings.dFactor; set => settings.dFactor = value; }
